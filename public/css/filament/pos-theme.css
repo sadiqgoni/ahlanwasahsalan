@@ -1,0 +1,131 @@
+/* Ahlan wa Sahlan — panel theme polish */
+
+.pos-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.pos-brand__mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.7rem;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.pos-brand__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+}
+
+.pos-brand__eyebrow {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #2563eb;
+}
+
+.dark .pos-brand__eyebrow {
+    color: #60a5fa;
+}
+
+.pos-brand__name {
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+/* Softer cards and sections */
+.fi-section {
+    border-radius: 0.9rem;
+}
+
+/* ============ Blue sidebar ============ */
+.fi-sidebar {
+    background: linear-gradient(180deg, #1e3a8a 0%, #1e293b 130%) !important;
+}
+
+.fi-sidebar-header {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Brand text on blue */
+.fi-sidebar .pos-brand__name {
+    color: #ffffff;
+}
+
+.fi-sidebar .pos-brand__eyebrow {
+    color: #93c5fd;
+}
+
+.fi-sidebar .pos-brand__mark {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+/* Group labels (SALES CONTROL, MENU SETUP…) */
+.fi-sidebar-group-label {
+    color: #93c5fd !important;
+    text-transform: uppercase;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.08em;
+}
+
+.fi-sidebar-group-btn .fi-icon,
+.fi-sidebar-group-dropdown-trigger-btn .fi-icon {
+    color: #93c5fd !important;
+}
+
+/* Items */
+.fi-sidebar-item-btn {
+    background-color: transparent !important;
+    border-radius: 0.6rem !important;
+}
+
+.fi-sidebar-item-label {
+    color: #dbeafe !important;
+}
+
+.fi-sidebar-item-btn > .fi-icon {
+    color: #93c5fd !important;
+}
+
+.fi-sidebar-item-btn:hover {
+    background-color: rgba(255, 255, 255, 0.09) !important;
+}
+
+/* Active item */
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    background-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-label {
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon {
+    color: #ffffff !important;
+}
+
+/* Grouped sub-item connector lines */
+.fi-sidebar-item-grouped-border-part {
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* Collapse / burger buttons inside the sidebar */
+.fi-sidebar .fi-icon-btn,
+.fi-sidebar .fi-icon-btn .fi-icon {
+    color: #bfdbfe !important;
+}
+
+.fi-sidebar .fi-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
