@@ -8,11 +8,12 @@
         <div class="pos-open-shift">
             <div class="pos-open-card">
                 <div class="pos-open-emoji">🔓</div>
-                <h2>Open Your Shift</h2>
+                <h2>Open Your Shift <small class="pos-ha">· Buɗe Aikinka</small></h2>
                 <p>Enter the cash float you are starting with. Every sale you record will be tied to this shift — at closing, the cash in the drawer must match the system.</p>
-                <label>Opening cash float (₦)</label>
+                <p class="pos-ha-note">Shigar da kuɗin da ka fara aiki da su. Duk sayarwar da ka yi za a lissafa a kanka — idan ka rufe aiki, kuɗin da ke akwati dole su zama daidai da na kwamfuta.</p>
+                <label>Opening cash float (₦) <span class="pos-ha">· Kuɗin fara aiki</span></label>
                 <input type="number" wire:model="openingFloat" min="0" step="100" placeholder="0" />
-                <button type="button" wire:click="openShift" class="pos-btn-primary">Start Shift</button>
+                <button type="button" wire:click="openShift" class="pos-btn-primary">Start Shift · Fara Aiki</button>
             </div>
         </div>
     @else
@@ -21,6 +22,7 @@
             <div class="pos-stale-shift">
                 ⚠️ This shift was opened on <strong>{{ $shift->opened_at->format('D d M, h:i A') }}</strong> and was never closed.
                 Close it now and print the Z-report, then open a fresh shift for today — otherwise today's sales will mix into that day's report.
+                <br><em>An buɗe wannan aikin tun {{ $shift->opened_at->format('d/m') }} ba a rufe ba. Ka rufe shi yanzu, sannan ka buɗe sabon aiki na yau.</em>
             </div>
         @endif
 
@@ -33,7 +35,7 @@
                         type="text"
                         wire:model.live.debounce.300ms="search"
                         wire:keydown.enter="scanOrSearch"
-                        placeholder="🔍 Search item or scan barcode…"
+                        placeholder="🔍 Search item / Nemo abinci…"
                         autocomplete="off"
                     />
                 </div>
@@ -62,6 +64,7 @@
                                     <button
                                         type="button"
                                         wire:click="selectProduct({{ $product->id }})"
+                                        onclick="posSound('add')"
                                         class="pos-item"
                                         style="--item-color: {{ $category->color }}"
                                     >
@@ -83,7 +86,7 @@
             <div class="pos-cart">
                 <div class="pos-cart-head">
                     <div>
-                        <strong>Current Order</strong>
+                        <strong>Current Order <span class="pos-ha">· Oda</span></strong>
                         <span class="pos-shift-badge">Shift open since {{ $shift->opened_at->format('h:i A') }}</span>
                     </div>
                     @if (! empty($cart))
@@ -106,31 +109,32 @@
                                 <span class="pos-line-unit">₦{{ number_format($line['unit_price']) }} each</span>
                             </div>
                             <div class="pos-line-qty">
-                                <button type="button" wire:click="decrementLine('{{ $key }}')">−</button>
+                                <button type="button" wire:click="decrementLine('{{ $key }}')" onclick="posSound('down')">−</button>
                                 <span>{{ $line['qty'] }}</span>
-                                <button type="button" wire:click="incrementLine('{{ $key }}')">+</button>
+                                <button type="button" wire:click="incrementLine('{{ $key }}')" onclick="posSound('up')">+</button>
                             </div>
                             <div class="pos-line-total">₦{{ number_format($line['unit_price'] * $line['qty']) }}</div>
-                            <button type="button" wire:click="removeLine('{{ $key }}')" class="pos-line-remove">✕</button>
+                            <button type="button" wire:click="removeLine('{{ $key }}')" onclick="posSound('down')" class="pos-line-remove">✕</button>
                         </div>
                     @empty
                         <div class="pos-cart-empty">
                             <div>🧾</div>
                             <p>Tap items to add them to the order</p>
+                            <p class="pos-ha">Danna abinci don saka a cikin oda</p>
                         </div>
                     @endforelse
                 </div>
 
                 <div class="pos-cart-foot">
                     <div class="pos-total-row">
-                        <span>TOTAL</span>
+                        <span>TOTAL <span class="pos-ha">· JIMLA</span></span>
                         <span class="pos-total">₦{{ number_format($cartTotal) }}</span>
                     </div>
-                    <button type="button" wire:click="startPayment" class="pos-btn-primary pos-btn-pay" @if(empty($cart)) disabled @endif>
-                        💵 Take Payment
+                    <button type="button" wire:click="startPayment" onclick="posSound('tap')" class="pos-btn-primary pos-btn-pay" @if(empty($cart)) disabled @endif>
+                        💵 Take Payment · Karɓi Kuɗi
                     </button>
                     <button type="button" wire:click="$set('showCloseShift', true)" class="pos-btn-ghost">
-                        Close Shift / Z-Report
+                        Close Shift · Rufe Aiki / Z-Report
                     </button>
                 </div>
             </div>
@@ -158,7 +162,7 @@
                     @endforeach
 
                     <div class="pos-modal-qty">
-                        <span>Quantity</span>
+                        <span>Quantity <span class="pos-ha">· Adadi</span></span>
                         <div class="pos-line-qty">
                             <button type="button" wire:click="$set('modalQty', {{ max(1, $modalQty - 1) }})">−</button>
                             <span>{{ $modalQty }}</span>
@@ -173,7 +177,7 @@
 
                     <div class="pos-modal-actions">
                         <button type="button" wire:click="closeModal" class="pos-btn-ghost">Cancel</button>
-                        <button type="button" wire:click="confirmOptions" class="pos-btn-primary">
+                        <button type="button" wire:click="confirmOptions" onclick="posSound('add')" class="pos-btn-primary">
                             Add — ₦{{ number_format($modalUnit * max(1, $modalQty)) }}
                         </button>
                     </div>
@@ -185,19 +189,19 @@
         @if ($showPayment)
             <div class="pos-overlay" wire:click.self="$set('showPayment', false)">
                 <div class="pos-modal">
-                    <h3>Payment — <span class="pos-total">₦{{ number_format($cartTotal) }}</span></h3>
+                    <h3>Payment <span class="pos-ha">· Biyan Kuɗi</span> — <span class="pos-total">₦{{ number_format($cartTotal) }}</span></h3>
 
                     <div class="pos-pay-methods">
-                        <button type="button" wire:click="$set('paymentMethod', 'cash')" class="pos-pay-method {{ $paymentMethod === 'cash' ? 'selected' : '' }}">💵 Cash</button>
+                        <button type="button" wire:click="$set('paymentMethod', 'cash')" class="pos-pay-method {{ $paymentMethod === 'cash' ? 'selected' : '' }}">💵 Cash<br><small>Tsabar Kuɗi</small></button>
                         <button type="button" wire:click="$set('paymentMethod', 'transfer')" class="pos-pay-method {{ $paymentMethod === 'transfer' ? 'selected' : '' }}">🏦 Transfer</button>
                         <button type="button" wire:click="$set('paymentMethod', 'pos')" class="pos-pay-method {{ $paymentMethod === 'pos' ? 'selected' : '' }}">💳 POS Card</button>
                     </div>
 
                     @if ($paymentMethod === 'cash')
-                        <label>Amount received (₦)</label>
+                        <label>Amount received (₦) <span class="pos-ha">· Kuɗin da aka karɓa</span></label>
                         <input type="number" wire:model.live="amountPaid" min="0" placeholder="{{ number_format($cartTotal) }}" />
                         @if (filled($amountPaid) && (float) $amountPaid >= $cartTotal)
-                            <div class="pos-change">Change due: <strong>₦{{ number_format((float) $amountPaid - $cartTotal) }}</strong></div>
+                            <div class="pos-change">Change due <span class="pos-ha">· Canji</span>: <strong>₦{{ number_format((float) $amountPaid - $cartTotal) }}</strong></div>
                         @endif
                     @else
                         <label>{{ $paymentMethod === 'transfer' ? 'Transfer reference / sender name' : 'POS terminal reference' }}</label>
@@ -210,7 +214,7 @@
                     <div class="pos-modal-actions">
                         <button type="button" wire:click="$set('showPayment', false)" class="pos-btn-ghost">Cancel</button>
                         <button type="button" wire:click="completeSale" class="pos-btn-primary">
-                            ✓ Complete & Print Receipt
+                            ✓ Complete & Print · Kammala a Buga Rasidi
                         </button>
                     </div>
                 </div>
@@ -221,27 +225,27 @@
         @if ($showCloseShift)
             <div class="pos-overlay" wire:click.self="$set('showCloseShift', false)">
                 <div class="pos-modal">
-                    <h3>Close Shift — Z-Report</h3>
+                    <h3>Close Shift — Z-Report <span class="pos-ha">· Rufe Aiki</span></h3>
                     <div class="pos-zsummary">
-                        <div><span>Opening float</span><strong>₦{{ number_format((float) $shift->opening_float) }}</strong></div>
-                        <div><span>Cash sales</span><strong>₦{{ number_format($shift->cashSalesTotal()) }}</strong></div>
+                        <div><span>Opening float <span class="pos-ha">· Kuɗin fara aiki</span></span><strong>₦{{ number_format((float) $shift->opening_float) }}</strong></div>
+                        <div><span>Cash sales <span class="pos-ha">· Sayarwar tsaba</span></span><strong>₦{{ number_format($shift->cashSalesTotal()) }}</strong></div>
                         <div><span>Transfers</span><strong>₦{{ number_format($shift->salesTotalByMethod('transfer')) }}</strong></div>
                         <div><span>POS card</span><strong>₦{{ number_format($shift->salesTotalByMethod('pos')) }}</strong></div>
-                        <div class="pos-zexpected"><span>Cash expected in drawer</span><strong>₦{{ number_format((float) $shift->opening_float + $shift->cashSalesTotal()) }}</strong></div>
+                        <div class="pos-zexpected"><span>Cash expected in drawer <span class="pos-ha">· Kuɗin da ya kamata a samu</span></span><strong>₦{{ number_format((float) $shift->opening_float + $shift->cashSalesTotal()) }}</strong></div>
                     </div>
 
-                    <label>Cash physically counted (₦)</label>
-                    <input type="number" wire:model="countedCash" min="0" placeholder="Count the drawer and enter the amount" />
+                    <label>Cash physically counted (₦) <span class="pos-ha">· Kuɗin da ka ƙidaya a akwati</span></label>
+                    <input type="number" wire:model="countedCash" min="0" placeholder="Ƙidaya kuɗin akwati ka shigar da adadin" />
                     @error('countedCash')
                         <div class="pos-error">{{ $message }}</div>
                     @enderror
 
-                    <label>Notes (optional)</label>
+                    <label>Notes (optional) <span class="pos-ha">· Bayani</span></label>
                     <input type="text" wire:model="closeNotes" placeholder="Any remarks…" />
 
                     <div class="pos-modal-actions">
-                        <button type="button" wire:click="$set('showCloseShift', false)" class="pos-btn-ghost">Cancel</button>
-                        <button type="button" wire:click="closeShift" class="pos-btn-danger">Close Shift & Print Z-Report</button>
+                        <button type="button" wire:click="$set('showCloseShift', false)" class="pos-btn-ghost">Cancel · Soke</button>
+                        <button type="button" wire:click="closeShift" class="pos-btn-danger">Close Shift & Print Z-Report · Rufe Aiki</button>
                     </div>
                 </div>
             </div>
@@ -258,6 +262,9 @@
         .pos-open-card p { opacity: .7; font-size: .9rem; margin-bottom: 1.25rem; }
         .pos-open-card label { display: block; text-align: left; font-size: .85rem; font-weight: 600; margin-bottom: .35rem; }
         .pos-open-card input { width: 100%; margin-bottom: 1rem; }
+
+        .pos-ha { opacity: .62; font-weight: 500; font-size: .88em; font-style: italic; }
+        .pos-ha-note { opacity: .62; font-size: .8rem; font-style: italic; margin-top: -0.75rem; margin-bottom: 1.25rem !important; }
 
         .pos-stale-shift { background: rgba(220, 38, 38, .1); border: 1.5px solid #dc2626; color: #b91c1c; border-radius: .8rem; padding: .9rem 1.1rem; font-size: .9rem; margin-bottom: 1rem; }
         .dark .pos-stale-shift { color: #fca5a5; }
@@ -350,10 +357,63 @@
     </style>
 
     <script>
+        // POS sound effects — generated with Web Audio API: no files, instant, works offline.
+        let posAudioCtx = null;
+
+        function posTone(freq, start, duration, type = 'sine', volume = 0.22) {
+            const osc = posAudioCtx.createOscillator();
+            const gain = posAudioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            const t = posAudioCtx.currentTime + start;
+            gain.gain.setValueAtTime(volume, t);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+            osc.connect(gain).connect(posAudioCtx.destination);
+            osc.start(t);
+            osc.stop(t + duration);
+        }
+
+        function posSound(kind) {
+            try {
+                posAudioCtx = posAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                if (posAudioCtx.state === 'suspended') posAudioCtx.resume();
+
+                switch (kind) {
+                    case 'tap':   // product tapped / button pressed
+                        posTone(880, 0, 0.07);
+                        break;
+                    case 'add':   // item added to cart (with options)
+                        posTone(740, 0, 0.06);
+                        posTone(1108, 0.06, 0.10);
+                        break;
+                    case 'up':    // quantity +
+                        posTone(660, 0, 0.05);
+                        posTone(880, 0.05, 0.08);
+                        break;
+                    case 'down':  // quantity − / remove
+                        posTone(880, 0, 0.05);
+                        posTone(587, 0.05, 0.09);
+                        break;
+                    case 'cash':  // payment completed — cash register "cha-ching"
+                        posTone(1046, 0.00, 0.09, 'triangle', 0.3);
+                        posTone(1318, 0.08, 0.09, 'triangle', 0.3);
+                        posTone(1568, 0.16, 0.11, 'triangle', 0.3);
+                        posTone(2093, 0.24, 0.30, 'triangle', 0.32);
+                        break;
+                    case 'error': // problem — low double buzz
+                        posTone(196, 0, 0.13, 'square', 0.12);
+                        posTone(196, 0.17, 0.13, 'square', 0.12);
+                        break;
+                }
+            } catch (e) { /* audio unavailable — never block a sale over a beep */ }
+        }
+
         document.addEventListener('livewire:init', () => {
             Livewire.on('open-receipt', ({ url }) => {
+                posSound('cash');
                 window.open(url, '_blank', 'width=420,height=650');
             });
+            Livewire.on('pos-error', () => posSound('error'));
         });
     </script>
 </x-filament-panels::page>

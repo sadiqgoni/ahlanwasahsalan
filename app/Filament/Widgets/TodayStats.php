@@ -27,17 +27,17 @@ class TodayStats extends StatsOverviewWidget
         $voids = Sale::whereDate('created_at', today())->where('status', 'voided')->count();
 
         return [
-            Stat::make('Total Sales Today', '₦'.number_format((float) $total))
-                ->description($receipts.' receipts issued')
+            Stat::make('Total Sales Today · Jimlar Sayarwar Yau', '₦'.number_format((float) $total))
+                ->description($receipts.' receipts · rasidi '.$receipts)
                 ->color('primary'),
-            Stat::make('Cash', '₦'.number_format((float) $cash))
-                ->description('Must be in the drawer')
+            Stat::make('Cash · Tsabar Kuɗi', '₦'.number_format((float) $cash))
+                ->description('Must be in the drawer · Dole su kasance a akwatin kuɗi')
                 ->color('success'),
             Stat::make('Transfer + POS Card', '₦'.number_format((float) $transfer + (float) $pos))
-                ->description('Match against bank statement')
+                ->description('Match against bank statement · A gwada da na banki')
                 ->color('info'),
-            Stat::make('Voided Receipts Today', (string) $voids)
-                ->description($voids > 0 ? 'Check the reasons!' : 'All clean')
+            Stat::make('Voided Receipts · Rasidin da Aka Soke', (string) $voids)
+                ->description($voids > 0 ? 'Check the reasons! · A duba dalilai!' : 'All clean · Babu matsala')
                 ->color($voids > 0 ? 'danger' : 'success'),
         ];
     }

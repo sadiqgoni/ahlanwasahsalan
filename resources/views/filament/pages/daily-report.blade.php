@@ -10,31 +10,31 @@
     {{-- Headline numbers --}}
     <div class="dr-stats">
         <div class="dr-stat dr-stat-main">
-            <span>Total sales</span>
+            <span>Total sales · Jimlar sayarwa</span>
             <strong>₦{{ number_format($report['total']) }}</strong>
-            <small>{{ $report['receipts'] }} receipts</small>
+            <small>{{ $report['receipts'] }} receipts · rasidi</small>
         </div>
         <div class="dr-stat">
-            <span>💵 Cash</span>
+            <span>💵 Cash · Tsabar kuɗi</span>
             <strong>₦{{ number_format($report['byMethod']['cash']) }}</strong>
-            <small>Must be in the drawer</small>
+            <small>Must be in the drawer · Dole su kasance a akwati</small>
         </div>
         <div class="dr-stat">
             <span>🏦 Transfer</span>
             <strong>₦{{ number_format($report['byMethod']['transfer']) }}</strong>
-            <small>Match bank statement</small>
+            <small>Match bank statement · A gwada da na banki</small>
         </div>
         <div class="dr-stat">
             <span>💳 POS Card</span>
             <strong>₦{{ number_format($report['byMethod']['pos']) }}</strong>
-            <small>Match terminal settlement</small>
+            <small>Match terminal settlement · A gwada da na'ura</small>
         </div>
     </div>
 
     <div class="dr-grid">
         {{-- Cashier accountability --}}
         <div class="dr-card">
-            <h3>👤 By Cashier</h3>
+            <h3>👤 By Cashier <span class="dr-ha">· Kowane Ma'aikaci</span></h3>
             <table>
                 <thead><tr><th>Cashier</th><th>Receipts</th><th>Cash</th><th>Total</th></tr></thead>
                 <tbody>
@@ -54,7 +54,7 @@
 
         {{-- Shifts & variance --}}
         <div class="dr-card">
-            <h3>🕐 Shifts &amp; Drawer Variance</h3>
+            <h3>🕐 Shifts &amp; Drawer Variance <span class="dr-ha">· Bambancin Kuɗin Akwati</span></h3>
             <table>
                 <thead><tr><th>Cashier</th><th>Status</th><th>Expected</th><th>Counted</th><th>Variance</th></tr></thead>
                 <tbody>
@@ -68,7 +68,7 @@
                                 @if ($shift->variance !== null)
                                     <span class="{{ (float) $shift->variance < 0 ? 'dr-bad' : ((float) $shift->variance > 0 ? 'dr-warn' : 'dr-good') }}">
                                         ₦{{ number_format((float) $shift->variance) }}
-                                        {{ (float) $shift->variance < 0 ? 'SHORT' : ((float) $shift->variance > 0 ? 'OVER' : '✓' ) }}
+                                        {{ (float) $shift->variance < 0 ? 'SHORT (KUƊI SUN RAGU)' : ((float) $shift->variance > 0 ? 'OVER (ƘARI)' : '✓ DAIDAI' ) }}
                                     </span>
                                 @else
                                     —
@@ -84,7 +84,7 @@
 
         {{-- Sections --}}
         <div class="dr-card">
-            <h3>🍛 By Section</h3>
+            <h3>🍛 By Section <span class="dr-ha">· Kowane Sashe</span></h3>
             <table>
                 <thead><tr><th>Section</th><th>Sales</th></tr></thead>
                 <tbody>
@@ -99,7 +99,7 @@
 
         {{-- Top items --}}
         <div class="dr-card">
-            <h3>🔥 Top Items</h3>
+            <h3>🔥 Top Items <span class="dr-ha">· Abincin da Aka Fi Saya</span></h3>
             <table>
                 <thead><tr><th>Item</th><th>Qty</th><th>Sales</th></tr></thead>
                 <tbody>
@@ -115,7 +115,7 @@
 
     {{-- Voided receipts — full width, the owner's watch-list --}}
     <div class="dr-card {{ $report['voided']->isNotEmpty() ? 'dr-card-danger' : '' }}">
-        <h3>🚫 Voided Receipts ({{ $report['voided']->count() }})</h3>
+        <h3>🚫 Voided Receipts <span class="dr-ha">· Rasidin da Aka Soke</span> ({{ $report['voided']->count() }})</h3>
         @if ($report['voided']->isEmpty())
             <p class="dr-empty" style="padding:.75rem 0;">None — clean day.</p>
         @else
@@ -167,5 +167,6 @@
         .dr-warn { color: #d97706; font-weight: 700; }
         .dr-bad { color: #dc2626; font-weight: 800; }
         .dr-card-danger { border-color: rgba(220,38,38,.4); }
+        .dr-ha { opacity: .55; font-weight: 500; font-size: .85em; font-style: italic; }
     </style>
 </x-filament-panels::page>

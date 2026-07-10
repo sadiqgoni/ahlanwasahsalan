@@ -34,13 +34,13 @@
     <div class="row"><span>Closed:</span><span>{{ $shift->closed_at?->format('d/m/Y h:i A') ?? 'STILL OPEN' }}</span></div>
 
     <div class="rule"></div>
-    <div class="bold">SALES SUMMARY</div>
-    <div class="row"><span>Receipts issued:</span><span>{{ $completed->count() }}</span></div>
-    <div class="row"><span>Voided receipts:</span><span>{{ $voided->count() }}</span></div>
-    <div class="row"><span>Cash sales:</span><span>₦{{ number_format($cash) }}</span></div>
-    <div class="row"><span>Transfer sales:</span><span>₦{{ number_format($transfer) }}</span></div>
-    <div class="row"><span>POS card sales:</span><span>₦{{ number_format($pos) }}</span></div>
-    <div class="row big"><span>TOTAL SALES:</span><span>₦{{ number_format($cash + $transfer + $pos) }}</span></div>
+    <div class="bold">SALES SUMMARY (JIMLAR SAYARWA)</div>
+    <div class="row"><span>Receipts (Rasidi):</span><span>{{ $completed->count() }}</span></div>
+    <div class="row"><span>Voided (Da aka soke):</span><span>{{ $voided->count() }}</span></div>
+    <div class="row"><span>Cash (Tsabar kuɗi):</span><span>₦{{ number_format($cash) }}</span></div>
+    <div class="row"><span>Transfer:</span><span>₦{{ number_format($transfer) }}</span></div>
+    <div class="row"><span>POS card:</span><span>₦{{ number_format($pos) }}</span></div>
+    <div class="row big"><span>TOTAL (JIMLA):</span><span>₦{{ number_format($cash + $transfer + $pos) }}</span></div>
 
     <div class="rule"></div>
     <div class="bold">BY SECTION</div>
@@ -49,15 +49,17 @@
     @endforeach
 
     <div class="rule"></div>
-    <div class="bold">CASH DRAWER</div>
-    <div class="row"><span>Opening float:</span><span>₦{{ number_format((float) $shift->opening_float) }}</span></div>
-    <div class="row"><span>+ Cash sales:</span><span>₦{{ number_format($cash) }}</span></div>
-    <div class="row big"><span>EXPECTED:</span><span>₦{{ number_format((float) ($shift->expected_cash ?? ((float) $shift->opening_float + $cash))) }}</span></div>
+    <div class="bold">CASH DRAWER (AKWATIN KUƊI)</div>
+    <div class="row"><span>Opening float (Kuɗin farawa):</span><span>₦{{ number_format((float) $shift->opening_float) }}</span></div>
+    <div class="row"><span>+ Cash sales (Sayarwar tsaba):</span><span>₦{{ number_format($cash) }}</span></div>
+    <div class="row big"><span>EXPECTED (YA KAMATA):</span><span>₦{{ number_format((float) ($shift->expected_cash ?? ((float) $shift->opening_float + $cash))) }}</span></div>
     @if ($shift->counted_cash !== null)
-        <div class="row big"><span>COUNTED:</span><span>₦{{ number_format((float) $shift->counted_cash) }}</span></div>
+        <div class="row big"><span>COUNTED (AN ƘIDAYA):</span><span>₦{{ number_format((float) $shift->counted_cash) }}</span></div>
         <div class="variance">
-            VARIANCE: ₦{{ number_format((float) $shift->variance) }}
-            {{ (float) $shift->variance === 0.0 ? '— BALANCED ✓' : ((float) $shift->variance < 0 ? '— SHORT!' : '— OVER') }}
+            VARIANCE (BAMBANCI): ₦{{ number_format((float) $shift->variance) }}<br>
+            {{ (float) $shift->variance === 0.0
+                ? 'BALANCED ✓ (DAIDAI NE)'
+                : ((float) $shift->variance < 0 ? 'SHORT! (KUƊI SUN RAGU!)' : 'OVER (AKWAI ƘARI)') }}
         </div>
     @endif
 

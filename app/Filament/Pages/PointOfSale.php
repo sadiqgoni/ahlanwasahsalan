@@ -91,7 +91,7 @@ class PointOfSale extends Page
             'opened_at' => now(),
         ]);
 
-        Notification::make()->title('Shift opened — good sales!')->success()->send();
+        Notification::make()->title('Shift opened · An buɗe aiki — good sales!')->success()->send();
     }
 
     public function closeShift(): void
@@ -120,7 +120,7 @@ class PointOfSale extends Page
 
         $this->dispatch('open-receipt', url: route('shift.report', $shift));
 
-        Notification::make()->title('Shift closed — Z-report ready')->success()->send();
+        Notification::make()->title('Shift closed · An rufe aiki — Z-report ready')->success()->send();
     }
 
     // ---------------- Cart ----------------
@@ -282,7 +282,8 @@ class PointOfSale extends Page
         $paid = filled($this->amountPaid) ? (float) $this->amountPaid : $total;
 
         if ($this->paymentMethod === 'cash' && $paid < $total) {
-            Notification::make()->title('Amount paid is less than total')->danger()->send();
+            $this->dispatch('pos-error');
+            Notification::make()->title('Amount paid is less than total · Kuɗin bai kai jimla ba')->danger()->send();
 
             return;
         }

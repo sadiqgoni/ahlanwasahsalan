@@ -78,6 +78,7 @@
         @endforeach
         <div class="rule"></div>
         <div class="center bold">Serve ONLY against this ticket</div>
+        <div class="center">Kada a bayar da abinci sai da wannan takarda</div>
     @endforeach
 
     <div class="no-print center" style="margin-top:12px;">

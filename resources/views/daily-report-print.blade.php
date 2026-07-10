@@ -36,7 +36,7 @@
         <div class="box"><span>Receipts</span><strong>{{ $report['receipts'] }}</strong></div>
     </div>
 
-    <h2>By Cashier</h2>
+    <h2>By Cashier (Kowane Ma'aikaci)</h2>
     <table>
         <thead><tr><th>Cashier</th><th class="num">Receipts</th><th class="num">Cash</th><th class="num">Total</th></tr></thead>
         <tbody>
@@ -46,7 +46,7 @@
         </tbody>
     </table>
 
-    <h2>Shifts &amp; Drawer Variance</h2>
+    <h2>Shifts &amp; Drawer Variance (Bambancin Kuɗin Akwati)</h2>
     <table>
         <thead><tr><th>Cashier</th><th>Opened</th><th>Closed</th><th class="num">Expected</th><th class="num">Counted</th><th class="num">Variance</th></tr></thead>
         <tbody>
@@ -65,7 +65,7 @@
         </tbody>
     </table>
 
-    <h2>By Section</h2>
+    <h2>By Section (Kowane Sashe)</h2>
     <table>
         <thead><tr><th>Section</th><th class="num">Sales</th></tr></thead>
         <tbody>
@@ -75,7 +75,7 @@
         </tbody>
     </table>
 
-    <h2>Voided Receipts ({{ $report['voided']->count() }})</h2>
+    <h2>Voided Receipts — Rasidin da Aka Soke ({{ $report['voided']->count() }})</h2>
     @if ($report['voided']->isEmpty())
         <p>None.</p>
     @else
