@@ -8,7 +8,13 @@ use App\Models\Shift;
 use App\Support\DailyReport;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect('/admin'));
+// Customer-facing landing page: pick your table (or scan its QR) to browse and order.
+Route::get('/', function () {
+    return view('welcome', [
+        'tables' => \App\Models\DiningTable::where('is_active', true)->orderBy('name')->get(),
+        'dishes' => \App\Models\Product::where('is_active', true)->whereNotNull('image')->orderBy('sort')->take(6)->get(),
+    ]);
+});
 
 // Public — a customer scans the table's QR code and lands here with no login.
 Route::get('/order/{token}', CustomerMenu::class)->name('table.menu');
