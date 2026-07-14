@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -35,6 +36,18 @@ class ProductForm
                             ->label('Barcode (optional)')
                             ->helperText('For laminated scan cards — leave empty if not used.')
                             ->default(null),
+                        FileUpload::make('image')
+                            ->label('Food Image')
+                            ->image()
+                            ->imageEditor()
+                            ->disk('public')
+                            ->directory('products')
+                            ->maxSize(4096)
+                            // POS tiles are small — shrink photos on upload so the menu loads fast.
+                            ->imageResizeMode('cover')
+                            ->imageResizeTargetWidth('800')
+                            ->imageResizeTargetHeight('600')
+                            ->columnSpanFull(),
                     ])
                     ->columns(2),
 

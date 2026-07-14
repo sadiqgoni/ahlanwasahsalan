@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\PointOfSale;
+use App\Models\Charge;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Shift;
@@ -36,13 +37,20 @@ class PosFlowTest extends TestCase
         $riceBeans = Product::where('name', 'Rice & Beans with Oil & Pepper')->firstOrFail();
         $salad = $riceBeans->options()->where('name', 'Salad')->firstOrFail();
 
-        Livewire::test(PointOfSale::class)
+        $checkout = Livewire::test(PointOfSale::class)
             ->call('selectProduct', $riceBeans->id)
             ->call('toggleOption', $salad->id)
             ->call('confirmOptions')
-            ->call('startPayment')
+            ->call('startPayment');
+
+        // Cash without typing the amount received must be refused — no silent exact-payment.
+        $checkout->call('completeSale')->assertHasErrors(['amountPaid']);
+        $this->assertEquals(0, Sale::count());
+
+        $checkout
             ->set('amountPaid', '2000')
-            ->call('completeSale');
+            ->call('completeSale')
+            ->assertDispatched('sale-completed', receiptUrl: route('receipt.print', Sale::first()));
 
         $sale = Sale::first();
         $this->assertNotNull($sale);
@@ -91,6 +99,55 @@ class PosFlowTest extends TestCase
             ->assertSee('SHORT');
     }
 
+    public function test_charges_apply_to_the_right_sections_and_print_on_the_receipt(): void
+    {
+        $this->seed(MenuSeeder::class);
+
+        $cashier = User::where('role', 'cashier')->first();
+        $this->actingAs($cashier);
+
+        Livewire::test(PointOfSale::class)->set('openingFloat', '0')->call('openShift');
+
+        $chipsSection = Product::where('name', 'Chips (Fries)')->firstOrFail()->category_id;
+
+        // VAT on everything, packaging only on the Masa & Chips section.
+        Charge::create(['name' => 'VAT (7.5%)', 'type' => 'percent', 'rate' => 7.5, 'is_active' => true]);
+        Charge::create(['name' => 'Packaging', 'type' => 'fixed', 'rate' => 100, 'category_id' => $chipsSection, 'is_active' => true]);
+        Charge::create(['name' => 'Old levy', 'type' => 'percent', 'rate' => 50, 'is_active' => false]); // inactive — ignored
+
+        // Zobo (₦300, Drinks) — VAT applies, packaging does not.
+        Livewire::test(PointOfSale::class)
+            ->call('selectProduct', Product::where('name', 'Zobo')->firstOrFail()->id)
+            ->call('startPayment')
+            ->set('amountPaid', '1000')
+            ->call('completeSale');
+
+        $sale = Sale::latest('id')->first();
+        $this->assertEquals(300.0, (float) $sale->subtotal);
+        $this->assertEquals(['VAT (7.5%)'], array_column($sale->charges, 'name'));
+        $this->assertEquals(322.5, (float) $sale->total); // 300 + 7.5%
+
+        // Chips (₦800) — VAT + packaging both apply.
+        Livewire::test(PointOfSale::class)
+            ->call('selectProduct', Product::where('name', 'Chips (Fries)')->firstOrFail()->id)
+            ->call('confirmOptions')
+            ->call('startPayment')
+            ->set('amountPaid', '1000')
+            ->call('completeSale');
+
+        $sale = Sale::latest('id')->first();
+        $this->assertEquals(800.0, (float) $sale->subtotal);
+        $this->assertEquals(['VAT (7.5%)', 'Packaging'], array_column($sale->charges, 'name'));
+        $this->assertEquals(960.0, (float) $sale->total); // 800 + 60 VAT + 100 packaging
+
+        // The customer copy itemises the charges.
+        $this->get(route('receipt.print', $sale))
+            ->assertOk()
+            ->assertSee('Subtotal:')
+            ->assertSee('VAT (7.5%):')
+            ->assertSee('Packaging:');
+    }
+
     public function test_owner_dashboard_and_permissions(): void
     {
         $this->seed(MenuSeeder::class);
@@ -113,5 +170,8 @@ class PosFlowTest extends TestCase
         $this->get(route('daily.report.print', ['date' => today()->toDateString()]))
             ->assertOk()
             ->assertSee('Daily Sales Report');
+        $this->get(route('reports.print', ['from' => today()->startOfMonth()->toDateString(), 'to' => today()->toDateString()]))
+            ->assertOk()
+            ->assertSee('Sales Report');
     }
 }

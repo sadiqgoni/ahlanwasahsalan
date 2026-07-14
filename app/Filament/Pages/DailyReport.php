@@ -18,13 +18,33 @@ class DailyReport extends Page
 
     protected static ?int $navigationSort = 4;
 
-    protected static ?string $title = 'Daily Report';
+    protected static ?string $title = 'Reports';
+
+    protected static ?string $navigationLabel = 'All Reports';
 
     public string $date = '';
+
+    public string $from = '';
+
+    public string $to = '';
 
     public function mount(): void
     {
         $this->date = now()->toDateString();
+        $this->from = now()->startOfMonth()->toDateString();
+        $this->to = now()->toDateString();
+    }
+
+    /** One-tap date ranges for the toolbar: today, yesterday, week, month. */
+    public function setRange(string $preset): void
+    {
+        [$this->from, $this->to] = match ($preset) {
+            'today' => [now()->toDateString(), now()->toDateString()],
+            'yesterday' => [now()->subDay()->toDateString(), now()->subDay()->toDateString()],
+            'week' => [now()->startOfWeek()->toDateString(), now()->toDateString()],
+            'month' => [now()->startOfMonth()->toDateString(), now()->toDateString()],
+            default => [$this->from, $this->to],
+        };
     }
 
     /** Owner and accountant only — this is the reconciliation screen. */
@@ -36,7 +56,7 @@ class DailyReport extends Page
     protected function getViewData(): array
     {
         return [
-            'report' => Report::build($this->date),
+            'report' => Report::buildRange($this->from, $this->to),
         ];
     }
 }

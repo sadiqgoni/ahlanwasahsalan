@@ -3,6 +3,9 @@
 namespace App\Filament\Pages;
 
 use App\Models\Category;
+use App\Models\Charge;
+use App\Models\CustomerOrderItem;
+use App\Models\DiningTable;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Shift;
@@ -11,6 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Url;
 use UnitEnum;
 
 class PointOfSale extends Page
@@ -27,10 +31,6 @@ class PointOfSale extends Page
 
     /** @var array<string, array> */
     public array $cart = [];
-
-    public ?int $activeCategory = null;
-
-    public string $search = '';
 
     // Options modal
     public ?int $modalProductId = null;
@@ -58,9 +58,24 @@ class PointOfSale extends Page
 
     public string $closeNotes = '';
 
+    // Charging a table's QR-ordered tab — set via the "Charge this table" link on Table Orders.
+    #[Url]
+    public ?int $chargeTable = null;
+
+    public ?int $activeTableId = null;
+
+    public ?string $activeTableName = null;
+
     public static function canAccess(): bool
     {
         return ! auth()->user()->isAccountant();
+    }
+
+    public function mount(): void
+    {
+        if ($this->chargeTable) {
+            $this->loadTableTab($this->chargeTable);
+        }
     }
 
     protected function getViewData(): array
@@ -75,6 +90,43 @@ class PointOfSale extends Page
                 ? Product::with('options')->find($this->modalProductId)
                 : null,
         ];
+    }
+
+    // ---------------- Table tabs (QR ordering) ----------------
+
+    /** Pulls a table's accepted-but-unpaid QR order items into the cart, ready to charge. */
+    public function loadTableTab(int $tableId): void
+    {
+        $table = DiningTable::find($tableId);
+
+        if (! $table) {
+            return;
+        }
+
+        $this->activeTableId = $table->id;
+        $this->activeTableName = $table->name;
+
+        foreach ($table->openTabItems() as $item) {
+            $this->cart['coi-'.$item->id] = [
+                'product_id' => $item->product_id,
+                'category_id' => $item->product?->category_id,
+                'name' => $item->product_name,
+                'section' => $item->section,
+                'options' => $item->options ?? [],
+                'unit_price' => (float) $item->unit_price,
+                'qty' => $item->quantity,
+                'customer_order_item_id' => $item->id,
+            ];
+        }
+
+        $this->chargeLinesMemo = null;
+    }
+
+    public function clearTableContext(): void
+    {
+        $this->activeTableId = null;
+        $this->activeTableName = null;
+        $this->chargeTable = null;
     }
 
     // ---------------- Shift ----------------
@@ -117,6 +169,7 @@ class PointOfSale extends Page
 
         $this->showCloseShift = false;
         $this->reset('countedCash', 'closeNotes', 'cart');
+        $this->chargeLinesMemo = null;
 
         $this->dispatch('open-receipt', url: route('shift.report', $shift));
 
@@ -189,6 +242,7 @@ class PointOfSale extends Page
         } else {
             $this->cart[$key] = [
                 'product_id' => $product->id,
+                'category_id' => $product->category_id,
                 'name' => $product->name,
                 'section' => $product->category->name,
                 'options' => $options,
@@ -196,12 +250,15 @@ class PointOfSale extends Page
                 'qty' => $qty,
             ];
         }
+
+        $this->chargeLinesMemo = null;
     }
 
     public function incrementLine(string $key): void
     {
         if (isset($this->cart[$key])) {
             $this->cart[$key]['qty']++;
+            $this->chargeLinesMemo = null;
         }
     }
 
@@ -213,28 +270,77 @@ class PointOfSale extends Page
             if ($this->cart[$key]['qty'] < 1) {
                 unset($this->cart[$key]);
             }
+
+            $this->chargeLinesMemo = null;
         }
     }
 
     public function removeLine(string $key): void
     {
         unset($this->cart[$key]);
+        $this->chargeLinesMemo = null;
     }
 
     public function clearCart(): void
     {
         $this->cart = [];
+        $this->chargeLinesMemo = null;
+        $this->clearTableContext();
     }
 
-    public function getCartTotalProperty(): float
+    public function getCartSubtotalProperty(): float
     {
         return collect($this->cart)->sum(fn ($line) => $line['unit_price'] * $line['qty']);
     }
 
-    // Barcode scanners type the code then send Enter — an exact match adds instantly.
-    public function scanOrSearch(): void
+    /** Computed once per request — the blade reads it several times (footer, modal, total). */
+    protected ?array $chargeLinesMemo = null;
+
+    /**
+     * Owner-configured charges (VAT, service charge, …) applied to this cart.
+     * A charge tied to a section only taxes the lines from that section.
+     *
+     * @return array<int, array{name: string, amount: float}>
+     */
+    public function getChargeLinesProperty(): array
     {
-        $code = trim($this->search);
+        if ($this->chargeLinesMemo !== null) {
+            return $this->chargeLinesMemo;
+        }
+
+        if (empty($this->cart)) {
+            return $this->chargeLinesMemo = [];
+        }
+
+        $lines = collect($this->cart);
+
+        return $this->chargeLinesMemo = Charge::where('is_active', true)
+            ->orderBy('sort')
+            ->get()
+            ->map(function (Charge $charge) use ($lines) {
+                $base = $lines
+                    ->when($charge->category_id, fn ($l) => $l->where('category_id', $charge->category_id))
+                    ->sum(fn ($line) => $line['unit_price'] * $line['qty']);
+
+                $amount = $charge->amountFor((float) $base);
+
+                return $amount > 0 ? ['name' => $charge->name, 'amount' => $amount] : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    public function getCartTotalProperty(): float
+    {
+        return $this->cartSubtotal + collect($this->chargeLines)->sum('amount');
+    }
+
+    // Barcode scanners type the code then send Enter — an exact match adds instantly.
+    // Search/filtering itself is client-side now; the server only sees the Enter key.
+    public function scanOrSearch(string $code = ''): void
+    {
+        $code = trim($code);
 
         if ($code === '') {
             return;
@@ -244,7 +350,7 @@ class PointOfSale extends Page
 
         if ($product) {
             $this->selectProduct($product->id);
-            $this->search = '';
+            $this->dispatch('barcode-matched');
         }
     }
 
@@ -278,8 +384,17 @@ class PointOfSale extends Page
             ]);
         }
 
+        // Cash: the cashier must type (or tap) the amount actually received —
+        // never assume exact payment, that is how change mistakes happen.
+        if ($this->paymentMethod === 'cash') {
+            $this->validate(['amountPaid' => 'required|numeric|min:0'], [
+                'amountPaid.required' => 'Enter the amount the customer gave you · Shigar da kuɗin da aka baka.',
+                'amountPaid.numeric' => 'Amount must be a number.',
+            ]);
+        }
+
         $total = $this->cartTotal;
-        $paid = filled($this->amountPaid) ? (float) $this->amountPaid : $total;
+        $paid = $this->paymentMethod === 'cash' ? (float) $this->amountPaid : $total;
 
         if ($this->paymentMethod === 'cash' && $paid < $total) {
             $this->dispatch('pos-error');
@@ -288,12 +403,19 @@ class PointOfSale extends Page
             return;
         }
 
-        $sale = DB::transaction(function () use ($shift, $total, $paid) {
+        $subtotal = $this->cartSubtotal;
+        $chargeLines = $this->chargeLines;
+        $tableId = $this->activeTableId;
+
+        $sale = DB::transaction(function () use ($shift, $total, $subtotal, $chargeLines, $paid, $tableId) {
             $sale = Sale::create([
                 'receipt_no' => Sale::nextReceiptNo(),
                 'shift_id' => $shift->id,
+                'dining_table_id' => $tableId,
                 'user_id' => auth()->id(),
                 'total' => $total,
+                'subtotal' => $subtotal,
+                'charges' => $chargeLines,
                 'amount_paid' => $paid,
                 'change_due' => $this->paymentMethod === 'cash' ? max(0, $paid - $total) : 0,
                 'payment_method' => $this->paymentMethod,
@@ -302,7 +424,7 @@ class PointOfSale extends Page
             ]);
 
             foreach ($this->cart as $line) {
-                $sale->items()->create([
+                $saleItem = $sale->items()->create([
                     'product_id' => $line['product_id'],
                     'product_name' => $line['name'],
                     'section' => $line['section'],
@@ -311,15 +433,24 @@ class PointOfSale extends Page
                     'line_total' => $line['unit_price'] * $line['qty'],
                     'options' => $line['options'],
                 ]);
+
+                // Line came from a customer's QR order — mark it charged so it drops off the table's open tab.
+                if (isset($line['customer_order_item_id'])) {
+                    CustomerOrderItem::where('id', $line['customer_order_item_id'])
+                        ->update(['sale_item_id' => $saleItem->id]);
+                }
             }
 
             return $sale;
         });
 
         $this->cart = [];
+        $this->chargeLinesMemo = null;
         $this->showPayment = false;
+        $this->clearTableContext();
 
-        $this->dispatch('open-receipt', url: route('receipt.print', $sale));
+        // Open the receipt in a popup and stay on the POS — the next customer is waiting.
+        $this->dispatch('sale-completed', receiptUrl: route('receipt.print', $sale));
 
         Notification::make()
             ->title("Receipt {$sale->receipt_no} — ₦".number_format($total))

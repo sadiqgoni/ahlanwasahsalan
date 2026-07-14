@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class Product extends Model
 {
@@ -15,6 +17,12 @@ class Product extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(fn () => Cache::forget('pos.menu'));
+        static::deleted(fn () => Cache::forget('pos.menu'));
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -23,5 +31,10 @@ class Product extends Model
     public function options(): HasMany
     {
         return $this->hasMany(ProductOption::class)->orderBy('sort');
+    }
+
+    public function imageUrl(): ?string
+    {
+        return $this->image ? Storage::disk('public')->url($this->image) : null;
     }
 }

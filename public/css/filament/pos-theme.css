@@ -46,6 +46,42 @@
     border-radius: 0.9rem;
 }
 
+/* ============ Warm cream page background (content area, not the sidebar) ============ */
+.fi-body {
+    background: #faf6ee !important;
+}
+
+.dark .fi-body {
+    background: #16140f !important;
+}
+
+.fi-main-ctn,
+.fi-topbar {
+    background: transparent !important;
+}
+
+.fi-topbar > nav {
+    background: rgba(250, 246, 238, 0.85) !important;
+    backdrop-filter: blur(6px);
+}
+
+.dark .fi-topbar > nav {
+    background: rgba(22, 20, 15, 0.85) !important;
+}
+
+/* Cards keep a clean surface so content still reads clearly against the cream */
+.fi-section,
+.fi-ta-ctn,
+.fi-wi-stats-overview-stat {
+    background: #ffffff !important;
+}
+
+.dark .fi-section,
+.dark .fi-ta-ctn,
+.dark .fi-wi-stats-overview-stat {
+    background: #221f19 !important;
+}
+
 /* ============ Blue sidebar ============ */
 .fi-sidebar {
     background: linear-gradient(180deg, #1e3a8a 0%, #1e293b 130%) !important;

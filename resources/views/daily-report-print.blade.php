@@ -2,12 +2,12 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Daily Report — {{ $report['day']->format('d M Y') }}</title>
+    <title>Sales Report — {{ $report['periodLabel'] }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #111; max-width: 190mm; margin: 0 auto; padding: 10mm 5mm; }
         h1 { font-size: 18px; }
-        h2 { font-size: 13px; margin: 14px 0 6px; border-bottom: 2px solid #2563eb; padding-bottom: 3px; }
+        h2 { font-size: 13px; margin: 14px 0 6px; border-bottom: 2px solid #d97706; padding-bottom: 3px; }
         .sub { color: #555; margin-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
         th { text-align: left; font-size: 10px; text-transform: uppercase; color: #555; border-bottom: 1px solid #999; padding: 3px 4px; }
@@ -25,8 +25,8 @@
     </style>
 </head>
 <body onload="window.print()">
-    <h1>{{ config('app.name') }} — Daily Sales Report</h1>
-    <div class="sub">{{ $report['day']->format('l, d F Y') }} · Printed {{ now()->format('d/m/Y h:i A') }} by {{ auth()->user()->name }}</div>
+    <h1>{{ config('app.name') }} — {{ $report['isSingleDay'] ? 'Daily Sales Report' : 'Sales Report' }}</h1>
+    <div class="sub">{{ $report['periodLabel'] }} · Printed {{ now()->format('d/m/Y h:i A') }} by {{ auth()->user()->name }}</div>
 
     <div class="summary">
         <div class="box"><span>Total Sales</span><strong>₦{{ number_format($report['total']) }}</strong></div>

@@ -11,12 +11,12 @@ class MenuSeeder extends Seeder
 {
     public function run(): void
     {
-        // ---------- Staff ----------
+        // ---------- Staff (they sign in with the username) ----------
         User::updateOrCreate(
-            ['email' => 'owner@restaurant.com'],
+            ['username' => 'owner'],
             [
-                'name' => 'Madam (Owner)',
-                'password' => Hash::make('owner1234'),
+                'name' => 'Hajiya',
+                'password' => Hash::make('12345678'),
                 'role' => 'owner',
                 'pin' => Hash::make('1234'),
                 'is_active' => true,
@@ -24,20 +24,20 @@ class MenuSeeder extends Seeder
         );
 
         User::updateOrCreate(
-            ['email' => 'cashier@restaurant.com'],
+            ['username' => 'cashier'],
             [
                 'name' => 'Cashier 1',
-                'password' => Hash::make('cashier1234'),
+                'password' => Hash::make('12345678'),
                 'role' => 'cashier',
                 'is_active' => true,
             ],
         );
 
         User::updateOrCreate(
-            ['email' => 'accountant@restaurant.com'],
+            ['username' => 'accountant'],
             [
                 'name' => 'Accountant',
-                'password' => Hash::make('account1234'),
+                'password' => Hash::make('12345678'),
                 'role' => 'accountant',
                 'is_active' => true,
             ],

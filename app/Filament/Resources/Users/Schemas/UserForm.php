@@ -20,10 +20,14 @@ class UserForm
                         TextInput::make('name')
                             ->label('Full name')
                             ->required(),
-                        TextInput::make('email')
-                            ->label('Email address')
-                            ->email()
-                            ->required(),
+                        TextInput::make('username')
+                            ->label('Username')
+                            ->helperText('What they type to sign in — short, no spaces, must be unique. e.g. cashier1')
+                            ->required()
+                            ->alphaDash()
+                            ->maxLength(30)
+                            ->unique(ignoreRecord: true)
+                            ->dehydrateStateUsing(fn (string $state): string => mb_strtolower(trim($state))),
                         TextInput::make('password')
                             ->password()
                             ->revealable()

@@ -13,6 +13,8 @@ class Sale extends Model
 
     protected $casts = [
         'total' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+        'charges' => 'array',
         'amount_paid' => 'decimal:2',
         'change_due' => 'decimal:2',
         'voided_at' => 'datetime',

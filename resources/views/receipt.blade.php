@@ -51,6 +51,13 @@
         @endforeach
     </table>
     <div class="rule"></div>
+    @if (! empty($sale->charges))
+        <div class="row"><span>Subtotal:</span><span>₦{{ number_format((float) $sale->subtotal) }}</span></div>
+        @foreach ($sale->charges as $charge)
+            <div class="row"><span>{{ $charge['name'] }}:</span><span>+₦{{ number_format((float) $charge['amount']) }}</span></div>
+        @endforeach
+        <div class="rule"></div>
+    @endif
     <div class="row total"><span>TOTAL</span><span>₦{{ number_format((float) $sale->total) }}</span></div>
     <div class="row"><span>Paid via:</span><span class="bold">{{ strtoupper($sale->payment_method) }}</span></div>
     @if ($sale->payment_method === 'cash' && $sale->amount_paid !== null)

@@ -14,8 +14,21 @@ class DailyReport
     {
         $day = Carbon::parse($date);
 
+        return static::buildRange($day->toDateString(), $day->toDateString());
+    }
+
+    /** Build a consolidated report for any inclusive business-date range. */
+    public static function buildRange(string $from, string $to): array
+    {
+        $start = Carbon::parse($from)->startOfDay();
+        $end = Carbon::parse($to)->endOfDay();
+
+        if ($start->gt($end)) {
+            [$start, $end] = [$end->copy()->startOfDay(), $start->copy()->endOfDay()];
+        }
+
         $sales = Sale::with(['items', 'user', 'voidedBy'])
-            ->whereDate('created_at', $day)
+            ->whereBetween('created_at', [$start, $end])
             ->get();
 
         $completed = $sales->where('status', 'completed');
@@ -44,7 +57,7 @@ class DailyReport
             ->values();
 
         $shifts = Shift::with('user')
-            ->whereDate('opened_at', $day)
+            ->whereBetween('opened_at', [$start, $end])
             ->orderBy('opened_at')
             ->get();
 
@@ -59,7 +72,13 @@ class DailyReport
             ->take(10);
 
         return [
-            'day' => $day,
+            'day' => $start,
+            'from' => $start,
+            'to' => $end,
+            'isSingleDay' => $start->isSameDay($end),
+            'periodLabel' => $start->isSameDay($end)
+                ? $start->format('l, d F Y')
+                : $start->format('d M Y').' — '.$end->format('d M Y'),
             'total' => array_sum($byMethod),
             'receipts' => $completed->count(),
             'byMethod' => $byMethod,

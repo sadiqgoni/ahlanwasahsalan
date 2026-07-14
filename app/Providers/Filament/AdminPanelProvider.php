@@ -29,10 +29,10 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(\App\Filament\Auth\Login::class)
             ->spa()
             ->colors([
-                'primary' => Color::Blue,
+                'primary' => Color::Amber,
                 'gray' => Color::Slate,
             ])
             ->sidebarWidth('270px')
